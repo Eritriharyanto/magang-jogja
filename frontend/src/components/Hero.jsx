@@ -2,8 +2,24 @@ import heroBlob from "@/assets/hero.png";
 import heroBg from "@/assets/hero-bg.png";
 import studentPurple from "@/assets/student-purple.png";
 import studentRed from "@/assets/student-red.png";
+import useApi from "@/hooks/useApi";
+import { getHero } from "@/api/homepageApi";
+
+// Dipakai selagi data dari backend belum datang, supaya tidak ada
+// layar kosong/kedip saat pertama kali halaman dibuka.
+const HERO_FALLBACK = {
+  judul_baris1: "Magang",
+  judul_baris2: "Kuy!",
+  subjudul:
+    "Kamu siswa SMK atau Mahasiswa? Cari tempat PKL, Magang, Prakerin, OJT atau praktik Kerja?",
+  deskripsi:
+    "Seven Inc membuka kesempatan buat Kamu yang ingin menjajal pengalaman kerja di bisnis yang dijalankan Seven Inc",
+};
 
 function Hero() {
+  const { data: hero } = useApi(() => getHero(), [], HERO_FALLBACK);
+  const content = hero ?? HERO_FALLBACK;
+
   return (
     <section
       id='top'
@@ -36,17 +52,15 @@ function Hero() {
 
         <div className='animate-mj-bounce-in'>
           <h1 className='mj-title text-[4.5rem] leading-[1.05] text-white md:text-[6.5rem]'>
-            Magang
+            {content.judul_baris1}
             <br />
-            Kuy!
+            {content.judul_baris2}
           </h1>
           <p className='mt-6 max-w-lg text-[0.95rem] font-bold uppercase leading-snug tracking-wide text-mj-green-deep'>
-            Kamu siswa SMK atau Mahasiswa? Cari tempat PKL, Magang, Prakerin,
-            OJT atau praktik Kerja?
+            {content.subjudul}
           </p>
           <p className='mt-5 max-w-lg text-[0.95rem] font-medium leading-snug text-white'>
-            Seven Inc membuka kesempatan buat Kamu yang ingin menjajal
-            pengalaman kerja di bisnis yang dijalankan Seven Inc
+            {content.deskripsi}
           </p>
         </div>
       </div>
