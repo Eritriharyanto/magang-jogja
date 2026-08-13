@@ -48,7 +48,7 @@ function App() {
         alt='Gratis 100% tanpa biaya'
         width={250}
         height={249}
-        className='fixed bottom-6 right-6 z-50 w-32 md:w-56'
+        className='animate-mj-badge-pulse fixed bottom-6 right-6 z-50 w-32 md:w-56'
       />
     </div>
   );
