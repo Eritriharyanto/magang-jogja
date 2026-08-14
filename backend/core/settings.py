@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     # Local apps
     'divisi',
     'homepage',
+    'chatbot',
 ]
 
 MIDDLEWARE = [
@@ -147,7 +148,27 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'http://localhost:4173',
+    'http://127.0.0.1:4173',
 ]
+
+# Header default django-cors-headers TIDAK termasuk header custom kita
+# (X-Visitor-Id, dipakai ChatView buat identifikasi visitor) -- kalau tidak
+# ditambahkan di sini, browser bakal block preflight request-nya (CORS error).
+from corsheaders.defaults import default_headers
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'x-visitor-id',
+]
+
+
+# Ollama -- dipakai chatbot buat pertanyaan yang tidak cocok dengan Intent
+# statis manapun. Pastikan Ollama sudah jalan (`ollama serve`) dan model
+# yang dipilih sudah di-pull (`ollama pull <nama_model>`).
+import os
+
+OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
+OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'llama3.2:3b')
 
 
 # Email
