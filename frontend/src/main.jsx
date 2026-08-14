@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App.jsx";
 import PosisiDetail from "./pages/PosisiDetail.jsx";
 import ScrollToHash from "./components/ScrollToHash.jsx";
+import ChatbotWidget from "./components/ChatbotWidget.jsx";
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
@@ -14,6 +15,7 @@ createRoot(document.getElementById("root")).render(
         <Route path='/' element={<App />} />
         <Route path='/posisi/:slug' element={<PosisiDetail />} />
       </Routes>
+      <ChatbotWidget />
     </BrowserRouter>
   </StrictMode>,
 );

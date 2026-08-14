@@ -1,8 +1,8 @@
 # magangjogja backend (Django)
 
 Backend API buat website magangjogja.com. Nyimpen data divisi magang,
-konten homepage (hero, syarat, fasilitas), dan nanti chatbot (intent +
-knowledge base + integrasi Ollama -- menyusul).
+konten homepage (hero, syarat, fasilitas), dan chatbot (intent statis +
+integrasi Ollama).
 
 ## Cara jalanin
 
@@ -17,9 +17,10 @@ pip install -r requirements.txt
 # 3. Jalankan migration (bikin database db.sqlite3)
 python manage.py migrate
 
-# 4. (Opsional tapi disarankan) isi data awal 18 divisi + syarat + fasilitas
+# 4. (Opsional tapi disarankan) isi data awal 18 divisi + syarat + fasilitas + chatbot
 python manage.py seed_divisi
 python manage.py seed_homepage
+python manage.py seed_chatbot
 
 # 5. Buat akun admin
 python manage.py createsuperuser
@@ -105,9 +106,80 @@ backend/
 
 ## Yang masih menyusul
 
-- App `chatbot/` -- model Intent & KnowledgeBase, integrasi Ollama
 - Setting `CORS_ALLOWED_ORIGINS` di `core/settings.py` baru mengizinkan
-  `localhost:5173` (dev server Vite). Nanti pas frontend sudah di-deploy,
-  tambahkan juga domain productionnya di situ.
-- Frontend React (`frontend/`) masih ambil data dari `content.js` statis --
-  ini perlu diubah supaya fetch dari API di atas.
+  `localhost:5173`/`4173` (dev server Vite). Nanti pas frontend sudah
+  di-deploy, tambahkan juga domain productionnya di situ.
+- Widget chat di sisi React (frontend) -- backend & API chatbot sudah siap,
+  tinggal dibikinkan tampilannya.
+- Dashboard admin React custom (untuk sekarang Django Admin sudah cukup
+  buat kelola semua konten, termasuk chatbot).
+
+## Chatbot (Static + Ollama)
+
+App `chatbot/` menerapkan pola yang sama dengan referensi
+[Chat-Bot-penyewaan-jas-sepatu-celana-versi-ollama-dan-statick](https://github.com/Eritriharyanto/Chat-Bot-penyewaan-jas-sepatu-celana-versi-ollama-dan-statick)
+(awalnya Flask), diadaptasi ke Django:
+
+**Alur jawab pesan** (lihat `chatbot/views.py` -> `ChatView`):
+1. Cek dulu guard statis (`chatbot/services/intent_matching.py`) -- sapaan
+   atau kata kunci `Intent` yang cocok. Kalau ketemu, langsung balas dari
+   database, cepat & gratis (tidak panggil AI sama sekali).
+2. Kalau tidak ada yang cocok, pesan diteruskan ke Ollama
+   (`chatbot/services/ollama_client.py`), dengan konteks berupa ringkasan
+   seluruh data magangjogja (`chatbot/services/knowledge_summary.py` --
+   ambil dari model `Divisi`, `SyaratItem`, `FasilitasItem`, `HeroContent`,
+   `KontakContent`, dan `KnowledgeEntry`). Balasannya di-stream token demi
+   token.
+
+**Gerbang identitas & riwayat chat** -- sama seperti referensi: pengunjung
+wajib isi nama & no. telepon dulu (`POST /api/chatbot/visitor/`) sebelum
+bisa chat. `visitor_id` yang didapat harus disimpan frontend (misal
+`localStorage`) dan dikirim di header `X-Visitor-Id` pada setiap request
+`POST /api/chatbot/chat/`. Semua pesan (user maupun bot) otomatis tercatat
+ke model `ChatMessage`, dan riwayatnya bisa dilihat di Django Admin pada
+halaman detail tiap `Visitor`.
+
+### Endpoint chatbot
+
+| Method | URL | Body / Header | Fungsi |
+|---|---|---|---|
+| POST | `/api/chatbot/visitor/` | `{"nama": "...", "no_telepon": "..."}` | Daftar/login identitas pengunjung, balik `visitor_id` |
+| POST | `/api/chatbot/chat/` | Header `X-Visitor-Id: <id>`, body `{"message": "..."}` | Kirim pesan chat |
+
+Contoh:
+```bash
+# 1. Daftar identitas
+curl -X POST http://127.0.0.1:8000/api/chatbot/visitor/ \
+  -d '{"nama": "Budi", "no_telepon": "081234567890"}'
+# -> {"visitor_id": 1, "nama": "Budi"}
+
+# 2. Kirim pesan (pakai visitor_id dari langkah 1)
+curl -X POST http://127.0.0.1:8000/api/chatbot/chat/ \
+  -H "X-Visitor-Id: 1" \
+  -d '{"message": "syarat daftar magang apa aja?"}'
+```
+
+### Isi data chatbot lewat Django Admin
+
+Semua konten chatbot bisa diedit tanpa sentuh kode:
+- **Intent / FAQ Chatbot** -- tambah/edit pertanyaan + kata kunci pemicu + jawaban statis
+- **Info Tambahan Chatbot** -- fakta tambahan yang jadi konteks Ollama (misal jam operasional, durasi magang)
+- **Pengunjung Chat** -- lihat semua orang yang pernah chat + transkrip lengkapnya
+
+### Setup Ollama (opsional, buat chat di luar Intent)
+
+```bash
+# 1. Install Ollama dari https://ollama.com/download
+
+# 2. Pull model (pilih salah satu, sesuai kemampuan laptop)
+ollama pull llama3.2:3b      # lebih pintar, lebih berat
+ollama pull qwen2.5:1.5b     # lebih ringan
+
+# 3. (Opsional) kalau pakai model selain llama3.2:3b, set environment variable:
+export OLLAMA_MODEL=qwen2.5:1.5b
+```
+
+Ollama otomatis jalan di `http://localhost:11434` setelah diinstall. Kalau
+tidak bisa dihubungi, chatbot tetap jalan normal untuk pertanyaan yang
+match Intent statis -- cuma pertanyaan di luar itu akan dapat pesan "AI
+sedang tidak bisa dihubungi" (lihat `chatbot/services/ollama_client.py`).
