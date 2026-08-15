@@ -12,8 +12,8 @@ createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <ScrollToHash />
       <Routes>
-        <Route path='/' element={<App />} />
-        <Route path='/posisi/:slug' element={<PosisiDetail />} />
+        <Route path="/" element={<App />} />
+        <Route path="/posisi/:slug" element={<PosisiDetail />} />
       </Routes>
       <ChatbotWidget />
     </BrowserRouter>

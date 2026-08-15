@@ -8,7 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('divisi.urls')),
     path('api/homepage/', include('homepage.urls')),
-    path('api/chatbot/', include('chatbot.urls')),
+    path('api/chatbot/', include('chatbot_app.urls')),
     # Dipakai admin dashboard nanti buat login & dapat token akses API.
     path('api/auth/token/', obtain_auth_token, name='api-token-auth'),
 ]
