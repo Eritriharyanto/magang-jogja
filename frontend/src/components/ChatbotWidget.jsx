@@ -1,15 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import useChatbot from "@/hooks/useChatbot";
+import { registerVisitor, sendChatMessage } from "@/api/chatbotApi";
 
-function ChatIcon() {
+const STORAGE_KEY = "magangjogja_chat_visitor";
+
+function loadStoredVisitor() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function ChatBubbleIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-7">
+    <svg viewBox='0 0 24 24' fill='none' className='size-7' aria-hidden='true'>
       <path
-        d="M4 4h16v12H7l-3 3V4z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-        strokeLinecap="round"
+        d='M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-4.5 4V17H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z'
+        fill='currentColor'
       />
     </svg>
   );
@@ -17,21 +25,12 @@ function ChatIcon() {
 
 function CloseIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-6">
-      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SendIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-5">
+    <svg viewBox='0 0 24 24' fill='none' className='size-5' aria-hidden='true'>
       <path
-        d="M3 11l18-8-8 18-2-8-8-2z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-        strokeLinecap="round"
+        d='M6 6l12 12M18 6L6 18'
+        stroke='currentColor'
+        strokeWidth='2'
+        strokeLinecap='round'
       />
     </svg>
   );
@@ -43,197 +42,225 @@ function IdentityForm({ onSubmit, submitting, error }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!nama.trim() || !noTelepon.trim() || submitting) return;
+    if (!nama.trim() || !noTelepon.trim()) return;
     onSubmit(nama.trim(), noTelepon.trim());
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-1 flex-col justify-center gap-3 p-5">
-      <p className="text-center text-[0.9rem] font-semibold text-mj-ink">
-        Kenalan dulu yuk, sebelum mulai chat &#128075;
+    <form
+      onSubmit={handleSubmit}
+      className='flex h-full flex-col justify-center gap-3 p-5'
+    >
+      <p className='text-center text-[0.9rem] font-medium text-mj-ink'>
+        Isi nama & nomor WhatsApp kamu dulu ya, biar admin bisa follow up kalau
+        perlu 🙂
       </p>
       <input
-        type="text"
+        type='text'
+        placeholder='Nama kamu'
         value={nama}
         onChange={(e) => setNama(e.target.value)}
-        placeholder="Nama kamu"
-        autoComplete="name"
-        className="rounded-lg border border-black/10 px-4 py-2 text-[0.9rem] outline-none focus:border-mj-green-dark"
+        className='rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-mj-green'
         required
       />
       <input
-        type="tel"
+        type='tel'
+        placeholder='Nomor WhatsApp (mis. 0812xxxxxxx)'
         value={noTelepon}
         onChange={(e) => setNoTelepon(e.target.value)}
-        placeholder="Nomor HP/WhatsApp"
-        autoComplete="tel"
-        className="rounded-lg border border-black/10 px-4 py-2 text-[0.9rem] outline-none focus:border-mj-green-dark"
+        className='rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-mj-green'
         required
       />
-      {error ? <p className="text-center text-[0.8rem] text-red-600">{error}</p> : null}
+      {error ? (
+        <p className='text-center text-xs text-red-600'>{error}</p>
+      ) : null}
       <button
-        type="submit"
+        type='submit'
         disabled={submitting}
-        className="mt-1 rounded-full bg-mj-green-dark py-2 text-[0.9rem] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+        className='rounded-full bg-mj-green py-2 text-sm font-bold uppercase text-white transition-opacity hover:opacity-90 disabled:opacity-60'
       >
         {submitting ? "Memulai..." : "Mulai Chat"}
       </button>
-      <p className="text-center text-[0.7rem] text-mj-ink/60">
-        Data kamu cuma dipakai buat menyambungkan riwayat chat kamu.
-      </p>
     </form>
   );
 }
 
-function MessageBubble({ role, text }) {
-  const isUser = role === "user";
+function ActionButton({ aksi }) {
+  if (!aksi) return null;
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div
-        className={`max-w-[80%] whitespace-pre-line rounded-2xl px-4 py-2 text-[0.85rem] leading-relaxed ${
-          isUser
-            ? "rounded-br-sm bg-mj-yellow text-mj-ink"
-            : "rounded-bl-sm bg-mj-green text-white"
-        }`}
-      >
-        {text}
-      </div>
-    </div>
+    <a
+      href={aksi.url}
+      target='_blank'
+      rel='noopener noreferrer'
+      className='mt-1 inline-block rounded-full bg-mj-green px-3 py-1.5 text-xs font-bold text-white transition-opacity hover:opacity-90'
+    >
+      {aksi.label} ↗
+    </a>
   );
 }
 
-function TypingIndicator() {
+function MessageBubble({ pengirim, pesan, aksi }) {
+  const isUser = pengirim === "user";
   return (
-    <div className="flex justify-start">
-      <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-mj-green px-4 py-3">
-        <span className="size-1.5 animate-bounce rounded-full bg-white/80 [animation-delay:-0.3s]" />
-        <span className="size-1.5 animate-bounce rounded-full bg-white/80 [animation-delay:-0.15s]" />
-        <span className="size-1.5 animate-bounce rounded-full bg-white/80" />
+    <div
+      className={`flex flex-col ${isUser ? "items-end" : "items-start"} gap-1`}
+    >
+      <div
+        className={`max-w-[80%] whitespace-pre-line rounded-2xl px-3 py-2 text-sm ${
+          isUser
+            ? "rounded-br-sm bg-mj-green text-white"
+            : "rounded-bl-sm bg-white text-mj-ink shadow"
+        }`}
+      >
+        {pesan}
       </div>
+      {!isUser ? <ActionButton aksi={aksi} /> : null}
     </div>
   );
 }
 
 function ChatbotWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [visitor, setVisitor] = useState(loadStoredVisitor);
+  const [registering, setRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState(null);
+
+  const [messages, setMessages] = useState([
+    {
+      pengirim: "bot",
+      pesan:
+        "Halo! Ada yang bisa dibantu seputar program magang di magangjogja.com?",
+    },
+  ]);
   const [input, setInput] = useState("");
-  const [identifying, setIdentifying] = useState(false);
-  const [identifyError, setIdentifyError] = useState(null);
-  const { visitor, messages, sending, error, identify, sendMessage } = useChatbot();
+  const [sending, setSending] = useState(false);
   const scrollRef = useRef(null);
 
-  // Auto-scroll ke pesan paling bawah setiap ada pesan baru / panel dibuka.
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, sending, isOpen]);
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages, open]);
 
-  async function handleIdentify(nama, noTelepon) {
-    setIdentifying(true);
-    setIdentifyError(null);
+  async function handleRegister(nama, noTelepon) {
+    setRegistering(true);
+    setRegisterError(null);
     try {
-      await identify(nama, noTelepon);
+      const data = await registerVisitor(nama, noTelepon);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setVisitor(data);
     } catch (err) {
-      setIdentifyError(err.message || "Gagal memulai chat, coba lagi.");
+      setRegisterError(err.message || "Gagal memulai chat. Coba lagi.");
     } finally {
-      setIdentifying(false);
+      setRegistering(false);
     }
   }
 
-  function handleSend(e) {
+  async function handleSend(e) {
     e.preventDefault();
-    if (!input.trim() || sending) return;
-    sendMessage(input.trim());
-    setInput("");
-  }
+    const pesan = input.trim();
+    if (!pesan || sending) return;
 
-  // Tampilkan "sedang mengetik" hanya kalau pesan terakhir masih dari user
-  // (artinya bot belum mulai balas sama sekali). Begitu balasan bot mulai
-  // muncul/di-stream, indikator ini otomatis hilang digantikan teksnya.
-  const lastMessage = messages[messages.length - 1];
-  const showTyping = sending && lastMessage?.role === "user";
+    setMessages((prev) => [...prev, { pengirim: "user", pesan }]);
+    setInput("");
+    setSending(true);
+
+    try {
+      const data = await sendChatMessage(visitor.id, pesan);
+      setMessages((prev) => [
+        ...prev,
+        { pengirim: "bot", pesan: data.pesan, aksi: data.aksi },
+      ]);
+    } catch (err) {
+      if (err.status === 401) {
+        localStorage.removeItem(STORAGE_KEY);
+        setVisitor(null);
+      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          pengirim: "bot",
+          pesan: err.message || "Maaf, terjadi kesalahan. Coba lagi.",
+        },
+      ]);
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <>
-      {/* Panel chat */}
-      <div
-        className={`fixed bottom-24 left-6 z-50 flex h-[28rem] max-h-[70vh] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300 ${
-          isOpen
-            ? "translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-4 opacity-0"
-        }`}
-        role="dialog"
-        aria-label="Chat dengan admin Magangjogja"
-        aria-hidden={!isOpen}
-      >
-        <div className="flex items-center justify-between bg-mj-green-dark px-4 py-3">
-          <div>
-            <p className="text-[0.9rem] font-bold text-white">Chat Admin Magangjogja</p>
-            <p className="text-[0.7rem] text-white/70">Biasanya balas dalam beberapa saat</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            className="text-white/80 transition-colors hover:text-white"
-            aria-label="Tutup chat"
-          >
-            <CloseIcon />
-          </button>
-        </div>
-
-        {!visitor ? (
-          <IdentityForm onSubmit={handleIdentify} submitting={identifying} error={identifyError} />
-        ) : (
-          <>
-            <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-mj-yellow/15 p-4">
-              {messages.map((m) => (
-                <MessageBubble key={m.id} role={m.role} text={m.text} />
-              ))}
-              {showTyping ? <TypingIndicator /> : null}
-            </div>
-
-            {error ? (
-              <p className="border-t border-black/5 px-4 py-1 text-center text-[0.75rem] text-red-600">
-                {error}
-              </p>
-            ) : null}
-
-            <form
-              onSubmit={handleSend}
-              className="flex items-center gap-2 border-t border-black/5 p-3"
-            >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Tulis pesan..."
-                className="flex-1 rounded-full border border-black/10 px-4 py-2 text-[0.85rem] outline-none focus:border-mj-green-dark"
-              />
-              <button
-                type="submit"
-                disabled={sending || !input.trim()}
-                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mj-green-dark text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-                aria-label="Kirim pesan"
-              >
-                <SendIcon />
-              </button>
-            </form>
-          </>
-        )}
-      </div>
-
-      {/* Tombol bubble */}
       <button
-        type="button"
-        onClick={() => setIsOpen((v) => !v)}
-        className={`fixed bottom-6 left-6 z-50 flex size-14 items-center justify-center rounded-full bg-mj-green-dark text-white shadow-xl transition-transform hover:scale-105 ${
-          isOpen ? "" : "animate-mj-badge-pulse"
-        }`}
-        aria-label={isOpen ? "Tutup chat" : "Buka chat dengan admin Magangjogja"}
+        type='button'
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? "Tutup chat" : "Buka chat"}
+        className='fixed bottom-6 left-6 z-50 flex size-14 items-center justify-center rounded-full bg-mj-green text-white shadow-lg transition-transform duration-300 hover:scale-105'
       >
-        {isOpen ? <CloseIcon /> : <ChatIcon />}
+        {open ? <CloseIcon /> : <ChatBubbleIcon />}
       </button>
+
+      {open ? (
+        <div className='fixed bottom-24 left-6 z-50 flex h-[28rem] w-[20rem] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:w-[22rem]'>
+          <div className='bg-mj-green-dark px-4 py-3 text-white'>
+            <p className='text-sm font-bold'>Chat magangjogja.com</p>
+            <p className='text-xs text-white/80'>
+              Biasanya balas dalam beberapa detik
+            </p>
+          </div>
+
+          {!visitor ? (
+            <IdentityForm
+              onSubmit={handleRegister}
+              submitting={registering}
+              error={registerError}
+            />
+          ) : (
+            <>
+              <div
+                ref={scrollRef}
+                className='flex-1 space-y-2 overflow-y-auto px-3 py-3'
+              >
+                {messages.map((m, i) => (
+                  <MessageBubble
+                    key={i}
+                    pengirim={m.pengirim}
+                    pesan={m.pesan}
+                    aksi={m.aksi}
+                  />
+                ))}
+                {sending ? (
+                  <div className='flex justify-start'>
+                    <div className='rounded-2xl rounded-bl-sm bg-white px-3 py-2 text-sm text-mj-ink shadow'>
+                      Mengetik...
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <form
+                onSubmit={handleSend}
+                className='flex gap-2 border-t border-black/10 p-3'
+              >
+                <input
+                  type='text'
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder='Tulis pesan...'
+                  className='flex-1 rounded-full border border-black/10 px-3 py-2 text-sm outline-none focus:border-mj-green'
+                />
+                <button
+                  type='submit'
+                  disabled={sending || !input.trim()}
+                  className='rounded-full bg-mj-green px-4 py-2 text-sm font-bold text-white disabled:opacity-50'
+                >
+                  Kirim
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      ) : null}
     </>
   );
 }

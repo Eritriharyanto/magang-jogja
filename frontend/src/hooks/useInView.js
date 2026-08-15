@@ -19,6 +19,7 @@ function useInView({ threshold = 0.2, rootMargin = "0px 0px -60px 0px" } = {}) {
       "(prefers-reduced-motion: reduce)"
     ).matches;
     if (prefersReducedMotion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInView(true);
       return;
     }

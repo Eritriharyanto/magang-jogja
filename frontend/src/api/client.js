@@ -1,7 +1,8 @@
 // URL dasar backend Django. Diambil dari environment variable (.env),
 // dengan fallback ke localhost:8000 supaya tetap jalan di development
 // walau .env belum di-setting.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 /**
  * Wrapper kecil di atas fetch() khusus buat manggil API backend.
@@ -20,7 +21,16 @@ export async function apiFetch(path, options = {}) {
   });
 
   if (!res.ok) {
-    throw new Error(`Gagal mengambil data dari ${path} (status ${res.status})`);
+    let detail = `Gagal mengambil data dari ${path} (status ${res.status})`;
+    try {
+      const errBody = await res.json();
+      if (errBody?.detail) detail = errBody.detail;
+    } catch {
+      // body error bukan JSON, pakai pesan default di atas
+    }
+    const err = new Error(detail);
+    err.status = res.status;
+    throw err;
   }
 
   // Response 204 No Content (biasa dari DELETE) tidak punya body JSON.
