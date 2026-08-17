@@ -165,7 +165,7 @@ dipakai saat chatbot jalan adalah data yang sudah masuk ke `db.sqlite3`.
 # 2. Pull model (pilih salah satu, sesuaikan kemampuan komputer)
 ollama pull llama3.2:3b
 # atau yang lebih ringan:
-ollama pull qwen2.5:1.5b
+ollama pull qwen2.5:0.5b
 ```
 
 Ollama otomatis jalan sebagai service di `http://localhost:11434`. Kalau mau

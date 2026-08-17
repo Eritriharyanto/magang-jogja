@@ -1,0 +1,16 @@
+{
+  "name": "magangjogja-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently -n BACKEND,FRONTEND,ADMIN -c blue,green,magenta \"npm:dev:backend\" \"npm:dev:frontend\" \"npm:dev:admin\"",
+    "dev:backend": "cd backend && venv/bin/python manage.py runserver",
+    "dev:backend": "cd backend && venv\\Scripts\\python manage.py runserver",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:admin": "cd admin && npm run dev",
+    "install:all": "npm install --prefix frontend && npm install --prefix admin && cd backend && venv/bin/pip install -r requirements.txt"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
