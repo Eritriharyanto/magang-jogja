@@ -1,8 +1,7 @@
 // URL dasar backend Django. Diambil dari environment variable (.env),
 // dengan fallback ke localhost:8000 supaya tetap jalan di development
 // walau .env belum di-setting.
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 /**
  * Wrapper kecil di atas fetch() khusus buat manggil API backend.

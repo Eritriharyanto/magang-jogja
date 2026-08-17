@@ -150,6 +150,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173',
     'http://localhost:4173',
     'http://127.0.0.1:4173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
 ]
 
 
@@ -159,7 +161,7 @@ CORS_ALLOWED_ORIGINS = [
 import os  # noqa: E402
 
 OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'llama3.2:3b')
+OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen2.5:0.5b')
 OLLAMA_TIMEOUT = int(os.environ.get('OLLAMA_TIMEOUT', '30'))
 
 
