@@ -39,6 +39,10 @@ def ask_ollama(system_prompt: str, pesan_user: str, riwayat: list[dict] | None =
                 "model": settings.OLLAMA_MODEL,
                 "messages": messages,
                 "stream": False,
+                "options": {
+                    "num_predict": settings.OLLAMA_NUM_PREDICT,
+                    "temperature": settings.OLLAMA_TEMPERATURE,
+                },
             },
             timeout=settings.OLLAMA_TIMEOUT,
         )

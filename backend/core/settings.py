@@ -156,22 +156,35 @@ CORS_ALLOWED_ORIGINS = [
 
 
 # Ollama -- dipakai chatbot_app buat jawab pertanyaan di luar intent statis.
-# OLLAMA_BASE_URL: alamat server Ollama (default kalau install lokal biasa).
-# OLLAMA_MODEL: nama model yang sudah di-`ollama pull`, misal llama3.2:3b.
+# Pastikan Ollama sudah jalan (`ollama serve` -- biasanya otomatis jalan
+# sebagai service setelah install) dan model yang dipilih sudah di-pull
+# (`ollama pull <nama_model>`).
 import os  # noqa: E402
 
+# Alamat server Ollama.
 OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
+
+# Nama model yang sudah di-`ollama pull`, misal llama3.2:3b, qwen2.5:0.5b.
 OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen2.5:0.5b')
+
+# Berapa lama (detik) backend nunggu jawaban dari Ollama sebelum nyerah
+# dan kasih pesan fallback. Naikkan kalau modelnya besar/lambat, turunkan
+# kalau mau gagal cepat daripada bikin user nunggu lama.
 OLLAMA_TIMEOUT = int(os.environ.get('OLLAMA_TIMEOUT', '30'))
 
+# Batas maksimal jumlah token yang boleh di-generate Ollama per jawaban
+# (kira-kira 1 token ~ 3-4 karakter Bahasa Indonesia). Ini yang nentuin
+# "panjang maksimal jawaban" -- makin besar, jawaban bisa makin panjang
+# tapi makin lama juga waktu generate-nya. -1 = tanpa batas (biarkan
+# Ollama berhenti sendiri), tapi disarankan tetap dikasih batas wajar
+# supaya jawaban gak melebar ke mana-mana / makan waktu lama.
+OLLAMA_NUM_PREDICT = int(os.environ.get('OLLAMA_NUM_PREDICT', '400'))
 
-# Ollama -- dipakai chatbot buat pertanyaan yang tidak cocok dengan Intent
-# statis manapun. Pastikan Ollama sudah jalan (`ollama serve`) dan model
-# yang dipilih sudah di-pull (`ollama pull <nama_model>`).
-import os
-
-OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'llama3.2:3b')
+# Seberapa "kreatif"/acak jawaban Ollama, dari 0.0 (paling konsisten &
+# to-the-point, cocok buat chatbot FAQ resmi) sampai 1.0+ (lebih
+# variatif/kreatif, tapi berisiko ngelantur). Default 0.3 dipilih rendah
+# supaya jawaban chatbot cenderung konsisten & nempel ke knowledge base.
+OLLAMA_TEMPERATURE = float(os.environ.get('OLLAMA_TEMPERATURE', '0.3'))
 
 
 # Email

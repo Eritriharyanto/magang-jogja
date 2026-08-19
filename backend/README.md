@@ -53,22 +53,22 @@ POST/PUT/PATCH/DELETE, harus login (dipakai admin dashboard nanti) --
 kirim header `Authorization: Token <token>` (dapat token dari endpoint
 login di bawah).
 
-| Method | URL | Fungsi |
-|---|---|---|
-| GET | `/api/divisi/` | List semua divisi (buat section Posisi Magang) |
-| GET | `/api/divisi/<slug>/` | Detail 1 divisi (buat halaman `/posisi/<slug>`) |
-| POST | `/api/divisi/` | Tambah divisi baru *(butuh login)* |
-| PUT/PATCH | `/api/divisi/<slug>/` | Edit divisi *(butuh login)* |
-| DELETE | `/api/divisi/<slug>/` | Hapus divisi *(butuh login)* |
-| GET | `/api/homepage/hero/` | Ambil konten Hero |
-| PUT | `/api/homepage/hero/` | Edit konten Hero *(butuh login)* |
-| GET | `/api/homepage/kontak/` | Ambil info kontak (nomor telepon, alamat) |
-| PUT | `/api/homepage/kontak/` | Edit info kontak *(butuh login)* |
-| GET | `/api/homepage/syarat/` | List syarat & ketentuan |
-| POST/PUT/DELETE | `/api/homepage/syarat/<id>/` | Kelola syarat *(butuh login)* |
-| GET | `/api/homepage/fasilitas/` | List fasilitas |
-| POST/PUT/DELETE | `/api/homepage/fasilitas/<id>/` | Kelola fasilitas *(butuh login)* |
-| POST | `/api/auth/token/` | Login -- kirim `username` & `password`, dapat balik `token` |
+| Method          | URL                             | Fungsi                                                      |
+| --------------- | ------------------------------- | ----------------------------------------------------------- |
+| GET             | `/api/divisi/`                  | List semua divisi (buat section Posisi Magang)              |
+| GET             | `/api/divisi/<slug>/`           | Detail 1 divisi (buat halaman `/posisi/<slug>`)             |
+| POST            | `/api/divisi/`                  | Tambah divisi baru _(butuh login)_                          |
+| PUT/PATCH       | `/api/divisi/<slug>/`           | Edit divisi _(butuh login)_                                 |
+| DELETE          | `/api/divisi/<slug>/`           | Hapus divisi _(butuh login)_                                |
+| GET             | `/api/homepage/hero/`           | Ambil konten Hero                                           |
+| PUT             | `/api/homepage/hero/`           | Edit konten Hero _(butuh login)_                            |
+| GET             | `/api/homepage/kontak/`         | Ambil info kontak (nomor telepon, alamat)                   |
+| PUT             | `/api/homepage/kontak/`         | Edit info kontak _(butuh login)_                            |
+| GET             | `/api/homepage/syarat/`         | List syarat & ketentuan                                     |
+| POST/PUT/DELETE | `/api/homepage/syarat/<id>/`    | Kelola syarat _(butuh login)_                               |
+| GET             | `/api/homepage/fasilitas/`      | List fasilitas                                              |
+| POST/PUT/DELETE | `/api/homepage/fasilitas/<id>/` | Kelola fasilitas _(butuh login)_                            |
+| POST            | `/api/auth/token/`              | Login -- kirim `username` & `password`, dapat balik `token` |
 
 ### Contoh login buat dapat token
 
@@ -121,7 +121,7 @@ dipakai saat chatbot jalan adalah data yang sudah masuk ke `db.sqlite3`.
   data `intents.json` kamu isinya 70-90 contoh kalimat per intent, bukan
   cuma 1-2 keyword pendek -- jadi dicocokkan pakai TF-IDF + cosine
   similarity (`chatbot_app/services/nlu.py`), bukan exact substring match.
-  Pesan user dicocokkan ke *contoh kalimat individual* paling mirip
+  Pesan user dicocokkan ke _contoh kalimat individual_ paling mirip
   (nearest neighbor), lalu diambil intent-nya. Kalau skor kemiripan di
   bawah 0.40, dianggap "tidak cukup yakin" dan dilempar ke Ollama.
 
@@ -165,7 +165,7 @@ dipakai saat chatbot jalan adalah data yang sudah masuk ke `db.sqlite3`.
 # 2. Pull model (pilih salah satu, sesuaikan kemampuan komputer)
 ollama pull llama3.2:3b
 # atau yang lebih ringan:
-ollama pull qwen2.5:0.5b
+ollama pull qwen2.5:1.5b
 ```
 
 Ollama otomatis jalan sebagai service di `http://localhost:11434`. Kalau mau
@@ -174,6 +174,23 @@ ganti model atau alamatnya, set environment variable sebelum `runserver`:
 ```bash
 export OLLAMA_MODEL=qwen2.5:1.5b
 export OLLAMA_BASE_URL=http://localhost:11434
+```
+
+**Pengaturan lain yang bisa diatur** (juga lewat environment variable, di `core/settings.py`):
+
+| Variable             | Default       | Fungsi                                                                                                                                                            |
+| -------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OLLAMA_TIMEOUT`     | `30` (detik)  | Berapa lama backend nunggu jawaban Ollama sebelum nyerah & kasih pesan fallback                                                                                   |
+| `OLLAMA_NUM_PREDICT` | `400` (token) | Batas maksimal panjang jawaban yang di-generate. ~1 token ≈ 3-4 karakter. Naikkan kalau jawaban sering kepotong, turunkan kalau mau jawaban lebih ringkas & cepat |
+| `OLLAMA_TEMPERATURE` | `0.3`         | Seberapa "kreatif"/acak jawabannya, dari `0.0` (paling konsisten, cocok buat FAQ resmi) sampai `1.0+` (lebih variatif tapi berisiko ngelantur)                    |
+
+Contoh set semuanya sekaligus (Windows CMD):
+
+```cmd
+set OLLAMA_MODEL=qwen2.5:0.5b
+set OLLAMA_NUM_PREDICT=250
+set OLLAMA_TEMPERATURE=0.2
+python manage.py runserver
 ```
 
 Kalau Ollama belum jalan / model belum di-pull, chatbot tidak akan error --
@@ -200,6 +217,7 @@ otomatis rebuild sendiri (dipicu Django signal tiap ada perubahan data
 
 Selain lewat command import, kamu juga bisa kelola satu-satu lewat
 `/admin/`:
+
 - **Intent (Jawaban Statis)**: field `contoh_pertanyaan` diisi list kalimat
   JSON, makin banyak & variatif makin akurat. Field `keywords` opsional,
   tidak wajib diisi.
@@ -208,14 +226,46 @@ Selain lewat command import, kamu juga bisa kelola satu-satu lewat
 
 ### Endpoint chatbot
 
-| Method | URL | Fungsi | Auth |
-|---|---|---|---|
-| POST | `/api/chatbot/visitor/` | Daftar/kenali visitor (nama + no. telepon) | Publik |
-| POST | `/api/chatbot/chat/` | Kirim pesan, dapat balasan | Publik (butuh visitor_id valid) |
-| GET/POST/PUT/DELETE | `/api/chatbot/intents/` | Kelola intent statis | Login |
-| GET/POST/PUT/DELETE | `/api/chatbot/knowledge/` | Kelola knowledge base | Login |
-| GET | `/api/chatbot/riwayat/` | List semua visitor + jumlah pesan | Login |
-| GET | `/api/chatbot/riwayat/<uuid>/` | Detail 1 visitor + transkrip lengkap | Login |
+| Method              | URL                            | Fungsi                                     | Auth                            |
+| ------------------- | ------------------------------ | ------------------------------------------ | ------------------------------- |
+| POST                | `/api/chatbot/visitor/`        | Daftar/kenali visitor (nama + no. telepon) | Publik                          |
+| POST                | `/api/chatbot/chat/`           | Kirim pesan, dapat balasan                 | Publik (butuh visitor_id valid) |
+| GET/POST/PUT/DELETE | `/api/chatbot/intents/`        | Kelola intent statis                       | Login                           |
+| GET/POST/PUT/DELETE | `/api/chatbot/knowledge/`      | Kelola knowledge base                      | Login                           |
+| GET                 | `/api/chatbot/riwayat/`        | List semua visitor + jumlah pesan          | Login                           |
+| GET                 | `/api/chatbot/riwayat/<uuid>/` | Detail 1 visitor + transkrip lengkap       | Login                           |
+
+### Export data chatbot (backup)
+
+Data intent & knowledge base yang kamu edit lewat dashboard admin cuma
+hidup di database (`db.sqlite3`) -- file `chatbot_data/intents.json` dan
+`knowledge_base.json` yang di-upload pertama kali TIDAK otomatis
+ke-update lagi (itu cuma arsip data awal).
+
+Kalau butuh backup/dokumentasi data terbaru dalam bentuk file JSON:
+
+```bash
+python manage.py export_chatbot_data
+```
+
+Hasilnya ditulis ke `chatbot_data/intents_export.json` dan
+`chatbot_data/knowledge_base_export.json` (sengaja beda nama dari arsip
+asli, supaya gak ketimpa). File `intents_export.json` formatnya sama
+persis dengan `intents.json` asli -- bisa langsung dipakai lagi buat
+`import_chatbot_data` kalau perlu (sudah diuji round-trip: export lalu
+import ulang, jumlah & isi data tetap sama).
+
+⚠️ `knowledge_base_export.json` **berbeda struktur** dari
+`knowledge_base.json` asli (flat list, bukan nested
+`informasi_program`/`posisi_magang`) -- itu karena struktur nested-nya
+"diratakan" satu arah pas import pertama kali, gak bisa direkonstruksi
+balik.
+
+Command ini **sengaja tidak jalan otomatis** tiap ada perubahan data
+(lihat penjelasan lengkap kenapa di percakapan sebelumnya -- intinya
+auto-write ke file punya risiko race condition & gak semua hosting
+punya filesystem permanen). Ditulis pakai atomic write (`os.replace`),
+jadi aman dijalankan kapan saja tanpa risiko file jadi corrupt.
 
 ## Yang masih menyusul
 
