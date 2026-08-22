@@ -22,6 +22,8 @@ python manage.py seed_divisi
 python manage.py seed_homepage
 python manage.py seed_chatbot
 
+python manage.py import_chatbot_data --intents chatbot_data/intents.json --knowledge chatbot_data/knowledge_base.json --replace ("PENTING")
+
 # 5. Buat akun admin
 python manage.py createsuperuser
 
