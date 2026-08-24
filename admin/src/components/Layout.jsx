@@ -34,41 +34,62 @@ function Layout() {
 
   return (
     <div className="flex min-h-screen bg-[#f4f6f5]">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-black/10 bg-mj-green-dark text-white">
-        <div className="px-5 py-5">
-          <p className="mj-display text-lg font-bold">magangjogja</p>
-          <p className="text-xs text-white/70">Admin Dashboard</p>
+      <aside className="flex w-64 shrink-0 flex-col bg-mj-green-dark text-white">
+        <div className="flex items-center gap-2.5 px-5 py-5">
+          <span className="mj-display flex size-9 items-center justify-center rounded-xl bg-white/15 text-base font-bold">
+            M
+          </span>
+          <div>
+            <p className="mj-display text-base font-bold leading-tight">magangjogja</p>
+            <p className="text-xs text-white/60">Admin Dashboard</p>
+          </div>
         </div>
+
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-6">
           {NAV_GROUPS.map((group) => (
             <div key={group.title}>
-              <p className="px-2 text-[0.7rem] font-bold uppercase tracking-wide text-white/50">
+              <p className="px-2 text-[0.7rem] font-bold uppercase tracking-wide text-white/45">
                 {group.title}
               </p>
-              <div className="mt-1 space-y-0.5">
+              <div className="mt-1.5 space-y-0.5">
                 {group.items.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      `block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/10"
+                      `relative block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        isActive
+                          ? "bg-white/15 text-white"
+                          : "text-white/75 hover:bg-white/10 hover:text-white"
                       }`
                     }
                   >
-                    {item.label}
+                    {({ isActive }) => (
+                      <>
+                        {isActive ? (
+                          <span className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-mj-yellow" />
+                        ) : null}
+                        <span className="pl-1.5">{item.label}</span>
+                      </>
+                    )}
                   </NavLink>
                 ))}
               </div>
             </div>
           ))}
         </nav>
+
         <div className="border-t border-white/10 px-3 py-4">
           <button
             onClick={logout}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-white/80 hover:bg-white/10"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white"
           >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-4">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <path d="M16 17l5-5-5-5" />
+              <path d="M21 12H9" />
+            </svg>
             Keluar
           </button>
         </div>
