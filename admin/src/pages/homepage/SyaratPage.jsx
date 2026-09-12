@@ -7,6 +7,7 @@ function SyaratPage() {
       title="Syarat & Ketentuan"
       description="Poin-poin yang tampil di section 'Syarat dan Ketentuan'."
       itemLabel="Syarat"
+      enablePhoto
       api={{
         list: getSyaratList,
         create: createSyarat,

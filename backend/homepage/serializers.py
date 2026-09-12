@@ -17,10 +17,10 @@ class KontakContentSerializer(serializers.ModelSerializer):
 class SyaratItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = SyaratItem
-        fields = ["id", "teks", "urutan"]
+        fields = ["id", "teks", "foto", "urutan", "aktif"]
 
 
 class FasilitasItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = FasilitasItem
-        fields = ["id", "teks", "urutan"]
+        fields = ["id", "teks", "urutan", "aktif"]

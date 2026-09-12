@@ -38,6 +38,13 @@ function Syarat() {
                       delay={i * 100}
                       className="flex flex-col items-center justify-end text-center"
                     >
+                      {s.foto ? (
+                        <img
+                          src={s.foto}
+                          alt=""
+                          className="mb-4 h-28 w-28 rounded-2xl object-cover shadow-md ring-4 ring-white/20 md:h-32 md:w-32"
+                        />
+                      ) : null}
                       <p className="max-w-xs whitespace-pre-line text-[0.95rem] leading-relaxed text-white">
                         {s.teks}
                       </p>
