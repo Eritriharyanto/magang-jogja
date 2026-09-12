@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .models import HeroContent, KontakContent, SyaratItem, FasilitasItem
 from .serializers import (
     HeroContentSerializer,
@@ -57,10 +58,13 @@ class KontakContentView(APIView):
 
 
 class SyaratItemViewSet(viewsets.ModelViewSet):
-    """/api/homepage/syarat/ -- list public, tambah/edit/hapus butuh login."""
+    """/api/homepage/syarat/ -- list public, tambah/edit/hapus butuh login.
+
+    Menerima multipart/form-data supaya bisa sekalian upload foto."""
 
     serializer_class = SyaratItemSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_queryset(self):
         qs = SyaratItem.objects.all()

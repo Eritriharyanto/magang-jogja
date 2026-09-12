@@ -64,6 +64,12 @@ class SyaratItem(models.Model):
     """Satu poin di section 'Syarat dan Ketentuan'."""
 
     teks = models.TextField(help_text="Isi poin syarat. Boleh multi-baris.")
+    foto = models.ImageField(
+        upload_to="syarat_foto/",
+        blank=True,
+        null=True,
+        help_text="Foto pendukung untuk poin syarat ini (opsional).",
+    )
     urutan = models.PositiveIntegerField(default=0)
     aktif = models.BooleanField(default=True)
 
