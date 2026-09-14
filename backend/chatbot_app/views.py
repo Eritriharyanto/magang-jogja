@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, mixins, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -11,9 +11,9 @@ from .serializers import (
 )
 from .services.nlu import match_intent_nlu
 from .services.kb_summary import build_system_prompt
-from .services.ollama_client import ask_ollama
+from .services.ollama_client import ask_ollama, FALLBACK_MESSAGE
 from .services.guard import is_off_topic, OFF_TOPIC_MESSAGE
-from .services.actions import build_chat_action
+from .services.actions import build_chat_action, build_kontak_action
 
 # Berapa banyak pesan terakhir yang disertakan sebagai konteks percakapan
 # saat manggil Ollama (biar chatbot "inget" obrolan sebelumnya, tapi tidak
@@ -104,6 +104,7 @@ class ChatView(APIView):
         if is_off_topic(pesan_user):
             jawaban = OFF_TOPIC_MESSAGE
             sumber = "guard"
+            aksi = build_kontak_action()
         else:
             intent = match_intent_nlu(pesan_user)
             if intent is not None:
@@ -122,6 +123,11 @@ class ChatView(APIView):
                 ]
                 jawaban = ask_ollama(build_system_prompt(), pesan_user, riwayat)
                 sumber = "ollama"
+                # ask_ollama return FALLBACK_MESSAGE (bukan exception) kalau
+                # Ollama gagal dihubungi -- di kondisi itu, kasih tombol WA
+                # juga supaya user tetap punya jalan keluar, bukan cuma teks.
+                if jawaban == FALLBACK_MESSAGE:
+                    aksi = build_kontak_action()
 
         ChatMessage.objects.create(visitor=visitor, pengirim="bot", pesan=jawaban, sumber=sumber)
 
@@ -144,12 +150,21 @@ class KnowledgeEntryViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class ChatHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+class ChatHistoryViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     """
-    GET /api/chatbot/riwayat/          -> list semua visitor + jumlah pesan
-    GET /api/chatbot/riwayat/<uuid>/   -> 1 visitor + transkrip lengkap
+    GET /api/chatbot/riwayat/           -> list semua visitor + jumlah pesan
+    GET /api/chatbot/riwayat/<uuid>/    -> 1 visitor + transkrip lengkap
+    DELETE /api/chatbot/riwayat/<uuid>/ -> hapus 1 visitor beserta seluruh
+                                            riwayat pesannya (cascade)
 
     Setara menu 'Riwayat Chat' di panel admin versi Flask. Butuh login.
+    Sengaja tidak pakai ModelViewSet penuh -- create/update lewat endpoint
+    ini tidak masuk akal (visitor cuma dibuat lewat VisitorRegisterView).
     """
 
     queryset = ChatVisitor.objects.all().prefetch_related("messages")

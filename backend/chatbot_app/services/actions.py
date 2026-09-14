@@ -24,6 +24,22 @@ def _clean_phone_for_wa(nomor: str) -> str:
     return digits
 
 
+def build_kontak_action() -> dict:
+    """Tombol 'Chat Admin via WhatsApp', bisa dipanggil langsung tanpa
+    perlu ada Intent yang match -- dipakai juga untuk pesan pengarahan
+    (off-topic guard) dan pesan fallback (Ollama gagal dihubungi), supaya
+    user selalu dikasih jalan keluar yang actionable, bukan cuma teks.
+    """
+    from homepage.models import KontakContent
+    kontak = KontakContent.get_solo()
+    wa_number = _clean_phone_for_wa(kontak.nomor_telepon)
+    return {
+        "type": "kontak",
+        "label": "Chat Admin via WhatsApp",
+        "url": f"https://wa.me/{wa_number}",
+    }
+
+
 def build_chat_action(intent) -> dict | None:
     """Return dict {"type", "label", "url"} kalau intent yang match butuh
     tombol tambahan, atau None kalau tidak ada."""
@@ -34,20 +50,15 @@ def build_chat_action(intent) -> dict | None:
     if action_type is None:
         return None
 
-    # Import di dalam fungsi (bukan di top-level) supaya chatbot_app tidak
-    # hard-dependency ke homepage app saat modul ini di-import lebih awal.
-    from homepage.models import KontakContent
-    kontak = KontakContent.get_solo()
-
     if action_type == "kontak":
-        wa_number = _clean_phone_for_wa(kontak.nomor_telepon)
-        return {
-            "type": "kontak",
-            "label": "Chat Admin via WhatsApp",
-            "url": f"https://wa.me/{wa_number}",
-        }
+        return build_kontak_action()
 
     if action_type == "lokasi":
+        # Import di dalam fungsi (bukan di top-level) supaya chatbot_app
+        # tidak hard-dependency ke homepage app saat modul ini di-import
+        # lebih awal.
+        from homepage.models import KontakContent
+        kontak = KontakContent.get_solo()
         return {
             "type": "lokasi",
             "label": "Buka di Google Maps",
