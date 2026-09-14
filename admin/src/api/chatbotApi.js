@@ -38,3 +38,6 @@ export function getChatHistoryList() {
 export function getChatHistoryDetail(visitorId) {
   return apiFetch(`/api/chatbot/riwayat/${visitorId}/`);
 }
+export function deleteChatHistory(visitorId) {
+  return apiFetch(`/api/chatbot/riwayat/${visitorId}/`, { method: "DELETE" });
+}
